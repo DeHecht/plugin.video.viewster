@@ -110,10 +110,12 @@ def getCats(url):
         addDir(sname, '%s#%s' % (sid,sname), 'GS', img, addonfanart, xname, '', '')
        
 
-def getShow(osid, start='0', end=str(MAX_PER_PAGE-1), order='1', lang='1', query='undefined'):
+def getShow(osid, start='0', end=str(MAX_PER_PAGE-1), order='1', lang=str(int(addon.getSetting('lang'))+1), query='undefined'):
       (sid, sxname) = osid.split('#',1)
       if '#' in sxname:
           (sxname,start,end,order,lang,query) = sxname.split('#',5)
+      if 'Trailers' in sid:
+          lang = '1' # force to English for trailers - until f4m available
       qurl = 'http://api.live.viewster.com/api/v1%s?from=%s&to=%s&q=%s&order=%s&lang=%s' % (sid, start, end, query, order, lang)
       html = getRequest(qurl, headers = {'Accept': 'application/json, text/javascript, */*; q=0.01', 'Origin': 'http://www.viewster.com', 
                       'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',

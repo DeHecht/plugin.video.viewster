@@ -1,3 +1,5 @@
 Version 1.0.1 Initial release
 
-version 1.0.2 added higher res video support
+Version 1.0.2 added higher res video support
+
+Version 1.0.3 added language support
