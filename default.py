@@ -110,7 +110,7 @@ def getCats(url):
         addDir(sname, '%s#%s' % (sid,sname), 'GS', img, addonfanart, xname, '', '')
        
 
-def getShow(osid, start='0', end=str(MAX_PER_PAGE-1), order='1', lang=str(int(addon.getSetting('lang'))+1), query='undefined'):
+def getShow(osid, start='0', end=str(MAX_PER_PAGE-1), order='1', lang=str(int(addon.getSetting('lang'))), query='undefined'):
       (sid, sxname) = osid.split('#',1)
       if '#' in sxname:
           (sxname,start,end,order,lang,query) = sxname.split('#',5)
