@@ -301,7 +301,8 @@ def getVideo(sid, name):
 
 #    url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=application%2Ff4m%2Bxml'
 #    url = 'https://public-api.viewster.com/movies/'+sid+'/video'
-    url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=video%2Fmp4&language=en&subtitle='
+#    url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=video%2Fmp4&language=en&subtitle='
+    url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=video%2Fmp4'
 
     headers = defaultHeaders
     headers['Auth-token'] = getToken()
