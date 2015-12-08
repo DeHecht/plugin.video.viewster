@@ -22,6 +22,8 @@ home          = addon.getAddonInfo('path').decode(UTF8)
 icon          = xbmc.translatePath(os.path.join(home, 'icon.png'))
 addonfanart   = xbmc.translatePath(os.path.join(home, 'fanart.jpg'))
 
+# 30032|30020|30021|30022|30023|30024
+lang_lookup   = [ None, 'en', 'fr', 'de', 'es', 'ja' ]
 
 def log(txt):
     message = '%s: %s' % (__addonname__, txt.encode('ascii', 'ignore'))
@@ -68,7 +70,6 @@ def getToken():
     return token
 
 def getSources(fanart):
-
     ilist = []
     url   = 'https://public-api.viewster.com/genres'
     headers = defaultHeaders
@@ -195,6 +196,7 @@ def getEpisodes(url, catname):
     html = getRequest(url, None, headers)
     try: a = json.loads(html)
     except: return
+
     for b in a:
        img    = 'http://image.api.viewster.com/movies/%s/image?width=196&height=279' % b['OriginId']
        name = b['Title']
@@ -224,15 +226,45 @@ def getEpisodes(url, catname):
        except: pass
        try: infoList['Duration'] = b['Duration']
        except: pass
-       u = '%s?url=%s&mode=GV' % (sys.argv[0], vid)
+
+       dub_lang = None
+       sub_lang = None
+       i_max = 128
+       try:
+           for l in b['LanguageSets']:
+              sub_this_language = "true"
+              try: sub_this_language = addon.getSetting('sub_'+l['Audio'])
+              except: pass
+
+              if sub_this_language == "false":
+                 dub_lang = l['Audio']
+                 sub_lang = None
+                 # We found a language the user has marked he understands!
+                 # This seems to be a perfect match no need to search any further
+                 break;
+
+              for i in [1,2,3,4]:
+                 if i >= i_max: # no improvement on subtitle rank possible anymore
+                    break;
+
+                 if lang_lookup[ int(addon.getSetting('sub_'+str(i))) ] == l['Subtitle']:
+                    dub_lang = l['Audio']
+                    sub_lang = l['Subtitle']
+                    i_max = i
+       except: pass
+
+       u = '%s?url=%s&mode=GV&dub=%s&sub=%s' % (sys.argv[0], vid, dub_lang, sub_lang)
        liz=xbmcgui.ListItem(name, '',None, img)
        liz.setInfo( 'Video', infoList)
        liz.addStreamInfo('video', { 'codec': 'avc1', 
                          'width' : 856, 
                          'height' : 480, 
                          'aspect' : 1.78 })
-       liz.addStreamInfo('audio', { 'codec': 'aac', 'language' : 'en', 'channels': 2})
-       liz.addStreamInfo('subtitle', { 'language' : 'en'})
+       liz.addStreamInfo('audio', { 'codec': 'aac', 'language' : dub_lang, 'channels': 2})
+
+       if sub_lang != None: # Skip adding subtitle info if not set
+         liz.addStreamInfo('subtitle', { 'language' : sub_lang})
+
        liz.setProperty('fanart_image', addonfanart)
        liz.setProperty('IsPlayable', 'true')
        ilist.append((u, liz, False))
@@ -295,14 +327,19 @@ def getShow(url, catname):
     if addon.getSetting('enable_views') == 'true':
       xbmc.executebuiltin("Container.SetViewMode(%s)" % addon.getSetting('shows_view'))
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
-              
 
-def getVideo(sid, name):
+def getVideo(sid, name, dub, sub):
 
 #    url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=application%2Ff4m%2Bxml'
 #    url = 'https://public-api.viewster.com/movies/'+sid+'/video'
 #    url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=video%2Fmp4&language=en&subtitle='
+
     url = 'https://public-api.viewster.com/movies/'+sid+'/video?mediaType=video%2Fmp4'
+    if dub != 'None':
+       url += '&language=' + dub
+
+    if sub != 'None':
+       url += '&subtitle=' + sub
 
     headers = defaultHeaders
     headers['Auth-token'] = getToken()
@@ -310,7 +347,6 @@ def getVideo(sid, name):
 
     html = getRequest(url, None, headers)
     a = json.loads(html)
-    print "a = "+str(a)
     url = a['Uri']
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xbmcgui.ListItem(path = url))
 
@@ -336,7 +372,7 @@ elif mode=='GC':  getCats(p('url'), p('name'))
 elif mode=='GS':  getShow(p('url'),p('name'))
 elif mode=='GM':  getMovie(p('url'),p('name'))
 elif mode=='GE':  getEpisodes(p('url'),p('name'))
-elif mode=='GV':  getVideo(p('url'),p('name'))
+elif mode=='GV':  getVideo(p('url'),p('name'),p('dub'),p('sub'))
 elif mode=='DS':  doSearch(p('url'))
 
 
