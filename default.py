@@ -79,7 +79,7 @@ def getToken():
           break
         except:
           print 'Error retieving token, retry!'
-          time.sleep(300)
+          time.sleep(1)
 
     token = uqp(re.compile('api_token=(.+?);',re.DOTALL).search(str(response.info())).group(1))
     return token
