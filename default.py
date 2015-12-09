@@ -7,6 +7,14 @@ import httplib
 import urllib, urllib2, cookielib, datetime, time, re, os, string
 import xbmcplugin, xbmcgui, xbmcaddon, xbmcvfs, xbmc
 import zlib,json,HTMLParser
+
+try:
+   import StorageServer
+except:
+   import storageserverdummy as StorageServer
+
+cache = StorageServer.StorageServer("plugin.video.viewster", 1) # (Your plugin name, Cache time in hours)
+
 h = HTMLParser.HTMLParser()
 qp  = urllib.quote_plus
 uqp = urllib.unquote_plus
@@ -65,7 +73,14 @@ def getToken():
     headers['If-Modified-Since'] = 'Wed, 09 Sep 2015 14:47:22 GMT'
 
     req = urllib2.Request(url, udata, headers)
-    response = urllib2.urlopen(req)
+    for i in [1,2,3,4,5,6,7,8,9]:
+        try:
+          response = urllib2.urlopen(req)
+          break
+        except:
+          print 'Error retieving token, retry!'
+          time.sleep(300)
+
     token = uqp(re.compile('api_token=(.+?);',re.DOTALL).search(str(response.info())).group(1))
     return token
 
@@ -73,7 +88,7 @@ def getSources(fanart):
     ilist = []
     url   = 'https://public-api.viewster.com/genres'
     headers = defaultHeaders
-    headers['Auth-token'] = getToken()
+    headers['Auth-token'] = cache.cacheFunction(getToken)
     html = getRequest(url, None, headers)
     cats = json.loads(html)
     for list in cats:
@@ -104,7 +119,7 @@ def doSearch(osid):
             search = urllib.quote_plus(keyb.getText())
             url = 'https://public-api.viewster.com/search/%s?pageSize=50&pageIndex=1' % uqp(search)
             headers = defaultHeaders
-            headers['Auth-token'] = getToken()
+            headers['Auth-token'] = cache.cacheFunction(getToken)
             headers['X-Requested-With']= 'XMLHttpRequest'
             html = getRequest(url, None, headers)
 
@@ -134,7 +149,7 @@ def getMovie(url, name):
     ilist = []
     url   = 'https://public-api.viewster.com/movies?pageSize=200&pageIndex=1&genreId=%s' % url
     headers = defaultHeaders
-    headers['Auth-token'] = getToken()
+    headers['Auth-token'] = cache.cacheFunction(getToken)
     html = getRequest(url, None, headers)
     try: a = json.loads(html)['Items']
     except: return
@@ -192,7 +207,7 @@ def getEpisodes(url, catname):
     ilist = []
     url   = 'https://public-api.viewster.com/series/%s/episodes' % url
     headers = defaultHeaders
-    headers['Auth-token'] = getToken()
+    headers['Auth-token'] = cache.cacheFunction(getToken)
     html = getRequest(url, None, headers)
     try: a = json.loads(html)
     except: return
@@ -284,7 +299,7 @@ def getShow(url, catname):
     ilist = []
     url   = 'https://public-api.viewster.com/series?pageSize=200&pageIndex=1&genreId=%s' % url
     headers = defaultHeaders
-    headers['Auth-token'] = getToken()
+    headers['Auth-token'] = cache.cacheFunction(getToken)
     html = getRequest(url, None, headers)
     try: a = json.loads(html)['Items']
     except: return
@@ -342,7 +357,7 @@ def getVideo(sid, name, dub, sub):
        url += '&subtitle=' + sub
 
     headers = defaultHeaders
-    headers['Auth-token'] = getToken()
+    headers['Auth-token'] = cache.cacheFunction(getToken)
     headers['X-Requested-With']= 'XMLHttpRequest'
 
     html = getRequest(url, None, headers)
